@@ -41,6 +41,16 @@ def emojies_counter(text: str) -> int:
 
 
 def aggregate(path: str, data: str) -> None:
+    """A function that combines text from json files into unified pd.DataFrame
+       with two extra features added in the process: number of words, number of '!' and number of emojies.
+       Creates a new csv file, that stores combined dataset.
+    Args:
+        path (str): path to directory that contains data 
+        data (str): folder that contains jsons with exportet messages
+
+    Returns:
+        None
+    """
 
     data = ""
 
