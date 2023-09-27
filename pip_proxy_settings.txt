@@ -1,0 +1,1 @@
+pip --proxy http://130.100.7.222:1082 install <lib>
