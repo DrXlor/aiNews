@@ -1,7 +1,6 @@
 from os import listdir
 from os.path import isfile, join
 from itertools import groupby
-
 import json
 import gc
 import pandas as pd
@@ -18,6 +17,7 @@ def word_counter(text: str) -> int:
     Returns:
         int: The number of words in the string
     """
+
     link_process = re.sub(r"http://\S+|https://\S+", "", text)
     garbage_process = re.sub(r'([^\s\w])', '', link_process)
     return len(re.sub(r'\w*\d+\w*', ' ', garbage_process).split())
@@ -32,6 +32,7 @@ def emojies_counter(text: str) -> int:
     Returns:
         int: _description_
     """
+
     del_space = re.sub(
         '\s+', ' ', text).strip().lower()
     del_words = re.sub(r'\w', '', del_space)
@@ -40,13 +41,40 @@ def emojies_counter(text: str) -> int:
     return del_symbols
 
 
-def aggregate(path: str, data: str) -> None:
+def clean_data(data: pd.DataFrame) -> pd.DataFrame:
+    """Clean dataset by removing special, escape and punct symbols
+
+    Args:
+        data (pd.DataFrame): initial dataset the cleaning is going to be applied to
+
+    Returns:
+        pd.DataFrame: clean dataset
+    """
+
+    def symbols_rm(text: str) -> None:
+        try:
+            text = re.sub(r"http://\S+|https://\S+", "", text)
+            text = re.sub(r'([^\s\w])', '', text).lower()
+            text = re.sub(r'\w*\d+\w*', ' ', text).strip()
+            text = re.sub('\s+', ' ', text)
+            return re.sub(r'\n', '', text)
+        except TypeError:
+            pass
+
+    data["text"] = data["text"].apply(symbols_rm)
+
+    # data.to_csv(path_or_buf = f"{PATH}{DATASET}_clean.csv", index=False, sep=",")
+    return data
+
+
+def aggregate(PATH: str, DATASET: str) -> None:
     """A function that combines text from json files into unified pd.DataFrame
        with two extra features added in the process: number of words, number of '!' and number of emojies.
        Creates a new csv file, that stores combined dataset.
+
     Args:
-        path (str): path to directory that contains data 
-        data (str): folder that contains jsons with exportet messages
+        PATH (str): path to directory that contains data 
+        DATASET (str): folder that contains jsons with exportet messages
 
     Returns:
         None
@@ -55,20 +83,19 @@ def aggregate(path: str, data: str) -> None:
     data = ""
 
     files = [f.split(".")[0].split(" ") for f in listdir(
-        f"{path}{data}") if isfile(join(f"{path}{data}", f))]
-    files = sorted([files[0][::-1] for files[0] in files], key=lambda x: x[0])
+        f"{PATH}{DATASET}") if isfile(join(f"{PATH}{DATASET}", f))]
 
+    files = sorted([files[0][::-1] for files[0] in files], key=lambda x: x[0])
     themes_channels = {int(k): [b for a, b in g]
                        for k, g in groupby(files, key=lambda x: x[0])}
-
     our_data = pd.DataFrame(columns=["id", "channel", "text", "genre"])
 
     data = ""
 
     for theme in themes_channels:
         for channel in themes_channels[theme]:
-            if f"{channel} {theme}.json" in listdir(f"{path}{data}"):
-                with open(f"{path}{data}/{channel} {theme}.json", encoding="utf8") as f:
+            if f"{channel} {theme}.json" in listdir(f"{PATH}{DATASET}"):
+                with open(f"{PATH}{DATASET}/{channel} {theme}.json", encoding="utf8") as f:
                     for line in f:
                         data = json.loads(line)
                         gc.collect()
@@ -77,7 +104,6 @@ def aggregate(path: str, data: str) -> None:
                 try:
                     our_data.loc[len(our_data.index)] = [int(
                         (data[i]["id"])), channel, data[i]["message"].replace(",", "."), theme]
-
                 except KeyError:
                     our_data.loc[len(our_data.index)] = [int(
                         data[i]["id"]), channel, np.nan, theme]
@@ -92,5 +118,9 @@ def aggregate(path: str, data: str) -> None:
         our_data.loc[index, ['word_count', 'sign_count', 'smile_count']] = [
             word_count, sign_count, smile_count]
 
-    our_data.to_csv(
-        path_or_buf=f"{path}/dataset/{data}.csv", index=False, sep=",")
+    clean_data(our_data).to_csv(
+        path_or_buf=f"{PATH}/dataset/{DATASET}.csv", index=False, sep=",")
+
+
+if __name__ == "__main__":
+    aggregate(PATH="data/", DATASET="news_29_80k")
