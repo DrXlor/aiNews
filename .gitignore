@@ -5,3 +5,4 @@ download_lib/
 pip_proxy_settings.txt
 models/
 requirements/
+HF_cache/
