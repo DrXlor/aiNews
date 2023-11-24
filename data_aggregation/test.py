@@ -1,4 +1,3 @@
-from data_aggregation.aggregation import aggregate
-from data_aggregation.aggregation import word_finder
+from aggregation import emojies_counter
 
-print(word_finder.__doc__)
+print(emojies_counter.__doc__)
