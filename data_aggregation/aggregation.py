@@ -63,7 +63,6 @@ def clean_data(data: pd.DataFrame) -> pd.DataFrame:
 
     data["text"] = data["text"].apply(symbols_rm)
 
-    # data.to_csv(path_or_buf = f"{PATH}{DATASET}_clean.csv", index=False, sep=",")
     return data
 
 
